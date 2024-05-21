@@ -16,7 +16,7 @@ function compute_stats(meanFx, meanFy, material)
     two_sigma = 2*std_dev_angles;
 
     % Display statistics for phase angles
-    fprintf('\nStatistics for angles:\n');
+    fprintf('\nStatistics for angles %s :\n', material);
     fprintf('Mean: %.2f\n', mean_angles);
     fprintf('Standard Deviation: %.2f\n', std_dev_angles);
     fprintf('Minimum: %.2f\n', min_angles);
@@ -41,7 +41,7 @@ function compute_stats(meanFx, meanFy, material)
     set(gca, 'FontSize', 16);
 
     % Adding labels and title with improved font size
-    ylabel('Phase angle values', 'FontSize', 16);
+    ylabel('Phase angle values (φ)', 'FontSize', 16);
     title('Boxplot of phase angles', 'FontSize', 18);
 
     % Adjusting the plot appearance
@@ -56,7 +56,10 @@ function compute_stats(meanFx, meanFy, material)
     b = mean(meanFx); % Valeur de b
     
     atan_value = atan(a/b); % Calcul de atan(a/b)
-    delta_atan = sqrt((delta_Fy/(1 + (a/b)^2))^2 + ((a * delta_Fx)/(b^2*(1 + (a/b)^2)))^2); % Calcul de l'incertitude
+    delta_atan = sqrt( ( delta_Fy/(b*(1 + (a/b)^2)) )^2 + ( (a * delta_Fx)/(b^2*(1 + (a/b)^2)) )^2 ); % Calcul de l'incertitude
+
+    % delta_atan = sqrt((delta_Fy*b/(a^2 + b^2))^2 + ((a * delta_Fx)/(b^2 + a^2))^2); % Calcul de l'incertitude 
+
 
     atan_value = rad2deg(atan_value); % Calcul de atan(a/b)
     delta_atan = rad2deg(delta_atan);
@@ -64,7 +67,6 @@ function compute_stats(meanFx, meanFy, material)
     % Affichage du résultat
     disp(['La valeur de atan(a/b) est : ', num2str(atan_value)]);
     disp(['L''incertitude sur atan(a/b) est : ', num2str(delta_atan)]);
-
 
     figure;
 
@@ -85,11 +87,11 @@ function compute_stats(meanFx, meanFy, material)
     plot(x_values, y_values, 'r--', 'LineWidth', 2, 'DisplayName', 'Fitted Gaussian');
     
     % Add legend
-    legend(sprintf('%s Phase Angle (PDF)', material), sprintf('Fitted Gaussian for %s', material), 'Location', 'best');
+    legend(sprintf('%s Phase Angle', material), sprintf('Fitted Gaussian for %s', material), 'Location', 'best');
 
     
     % Add labels and title
-    xlabel('Phase angle values');
+    xlabel('Phase angle values (φ)');
     ylabel('Probability Density');
     title({sprintf('Histogram of %s Phase Angles with Fitted Gaussian Distribution', material)});
     

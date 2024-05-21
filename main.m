@@ -3,60 +3,77 @@ function main()
     close all
     clc
     
+    % By default we don't plot the boxplots and we don't have samples
     boxplots = false;
-
     sample = false;
 
-    prompt = 'Do you want to do the sample measures (see steps) ? (y/n): ';
+    % Decide if we want to take the sample measures
+    prompt = 'Do you want to take the sample measures (see steps) ? (y/n): ';
     user_response = input(prompt, 's');
 
     if strcmpi(user_response, 'y')
 
-
         currentFolder = pwd;
         paramsFilePath = fullfile(currentFolder, 'params.pssettings');
         pdfFilePath = fullfile(currentFolder, 'prez_1-64-72.pdf');
-
         winopen(paramsFilePath);
         winopen(pdfFilePath);
 
     end
 
+    % Decide how many benchmarks we want to use
     user = getenv('username');
     startpath = ['C:\Users\',user,'\Desktop\PRI\enregistrements\'];
-    
     n_essais = input('Enter the number of benchmarks to use : ');
 
     number_of_files = zeros(1, n_essais);
     new_number_of_files = zeros(1, n_essais);
-    
     FullFileNames_all = cell(1, 200);
-
     length_sample = 0;
-
     memory_FullFileNames = 0;
-
     fullfile_idx = 1;
-    
-    for k = 1 : n_essais
 
-        FullFileNames = usergetfiles(startpath);
-        % Cumulatively sum the lengths of FullFileNames
-        
-        number_of_files(k) = memory_FullFileNames + length(FullFileNames);
+    if n_essais == 4 && ~input('Do you want to manually select files? (1 for Yes, 0 for No): ') 
 
-        memory_FullFileNames = number_of_files(k);
+            % Load file names from a saved MAT file
+            try
 
-        FullFileNames_all(fullfile_idx : number_of_files(k)) = FullFileNames;
+                load('file_names_data.mat'); % Load previously saved file names
+                fprintf('File names loaded from saved data.\n');
 
-        fullfile_idx = 1 + number_of_files(k);
+            catch
+                
+                error('Error loading file names. Please ensure that file_names_data.mat exists.');
+
+            end
+
+
+    else
+
+        for k = 1 : n_essais
+
+            FullFileNames = usergetfiles(startpath);
+            % Cumulatively sum the lengths of FullFileNames
+
+            number_of_files(k) = memory_FullFileNames + length(FullFileNames);
+
+            memory_FullFileNames = number_of_files(k);
+
+            FullFileNames_all(fullfile_idx : number_of_files(k)) = FullFileNames;
+
+            fullfile_idx = 1 + number_of_files(k);
+
+            % Save the file names to a MAT file
+            % save('file_names_data.mat', 'FullFileNames_all', 'number_of_files', 'fullfile_idx');
+
+        end
 
     end
 
     % Ask the user if they want to load sample files
     prompt = 'Do you want to load sample files? (y/n): ';
     user_response = input(prompt, 's');
-    
+
     if strcmpi(user_response, 'y')
 
         sample = true;
@@ -90,10 +107,6 @@ function main()
 
     end
 
-    plot(0,0);
-
-
-
     % 200 index
     index = cell(1, n_essais + 1);
 
@@ -122,6 +135,9 @@ function main()
 
     all_Fx_plot_clean = cell(1, 10);
     all_Fy_plot_clean = cell(1, 10);
+
+    all_angle_clean = cell(1, 10);
+    all_magnitude_clean = cell(1, 10);
 
     % count_index = 1;
 
@@ -155,17 +171,21 @@ function main()
 
         %[tmin, tmax] = bounds(t);
 
-        f10 = figure;
-        plot(t,Fy,'r',t,Fx,'b'), xlabel('t(s)'), ylabel('V'), axis tight, legend('Fy','Fx','Location','southwest')
+        
         %pas sure que le temps soit en seconds, il faut vérifier dans le
         %logiciel du picoscope
         if i == 1
+
+            f10 = figure;
+            plot(t,Fy,'r',t,Fx,'b'), xlabel('t(s)'), ylabel('V'), axis tight, legend('Fy','Fx','Location','southwest')
             waitforbuttonpress; p1 = get(gca,'CurrentPoint');
             waitforbuttonpress; p2 = get(gca,'CurrentPoint');
             first = find(t <= p1(1,1)); first = first(end);
             last = find(t <= p2(1,1)); last = last(end);
+            close(f10);
+
         end
-        close(f10)
+        
 
         %compute mean values
         meanFx(i) = mean(Fx(first:last));
@@ -201,6 +221,10 @@ function main()
 
     angles_boxplots = cell(1, idx - 1);
 
+    fig1 = figure;
+
+   
+
     for y = 1 : idx - 1
 
 
@@ -213,17 +237,29 @@ function main()
         % for boxplots
         angles_boxplots{y} = compute_angles(all_Fx_plot{y}, all_Fy_plot{y});
 
+        if strcmp(names{y}, 'perlite') % 'perlite'
+
+            compute_stats(all_Fx_plot{y}, all_Fy_plot{y}, names{y});
+
+        end
+
+        figure(fig1);
+
         % Get the color for plotting
         color = getColorForIteration(y);
 
         % Plot data
-        plotData(all_Fx_plot_clean{y}, all_Fy_plot_clean{y}, color, names{y}, index_clean);
-        plotRegressionAndFilledAreas(all_Fx_plot_clean{y}, all_Fy_plot_clean{y}, color, [names(y)], iteration);
+        plotData(all_Fx_plot_clean{y}, all_Fy_plot_clean{y}, color, names{y}, index_clean, 1);
+        plotRegressionAndFilledAreas(all_Fx_plot_clean{y}, all_Fy_plot_clean{y}, color, names(y), iteration);
         iteration = iteration + 1;
 
         hold on
 
     end
+
+    xlabel('Resistance Fx in V', 'FontSize', 14);
+    ylabel('Reactance Fy in V', 'FontSize', 14);
+
 
     new_number_of_files = cumsum(new_number_of_files);
 
@@ -240,6 +276,16 @@ function main()
             meanFx_sample = all_Fx_plot{idx};
             meanFy_sample = all_Fy_plot{idx};
 
+            % Clean the sample
+            [meanFx_sample_clean, meanFy_sample_clean, index_clean] = filter_Fx_Fy(meanFx_sample, meanFy_sample, index{idx});
+            
+            % Plot data
+            plotData(meanFx_sample_clean, meanFy_sample_clean, ...
+                'k', 'sample', index_clean, 1);
+
+            Z_sample_clean = meanFx_sample_clean + 1j*meanFy_sample_clean;
+            angle_sample_clean = angle(rad2deg(Z_sample_clean));
+
             for j = 1 : idx - 1
     
                 all_meanFx_clean(index_Fx : new_number_of_files(j)) = all_Fx_plot_clean{j};
@@ -248,18 +294,52 @@ function main()
                 all_meanFy_clean(index_Fy : new_number_of_files(j)) = all_Fy_plot_clean{j};
                 index_Fy = 1 + new_number_of_files(j);
 
+                Z_j = all_Fx_plot_clean{j} + 1j*all_Fy_plot_clean{j};
+                all_angle_clean{j} = rad2deg(angle(Z_j));  % angles in degrees
+                all_magnitude_clean{j} = abs(Z_j);   % magnitudes of each element in Z_j
+
+                Zper = (max(all_magnitude_clean{j}) - min(all_magnitude_clean{j})) / mean(all_magnitude_clean{j}) * 100;
+                angleper = (max(all_angle_clean{j}) - min(all_angle_clean{j})) / mean(all_angle_clean{j}) * 100;
+
             end
 
-            % Clean the sample
-            [meanFx_sample_clean, meanFy_sample_clean, index_clean] = filter_Fx_Fy(meanFx_sample, meanFy_sample, index{idx});
-            
-            % Plot data
-            plotData(meanFx_sample_clean, meanFy_sample_clean, ...
-                'k', 'sample', index_clean);
-            
+
+            % Initialize counter for members included for each j
+            count_members_per_benchmark = zeros(1, idx - 1);
+
+            % Iterate over each element in angle_sample
+            for angle_val = angle_sample_clean
+                % Iterate over each cell in all_angle_clean
+                for j = 1:idx - 1
+                    % Get the minimum and maximum angle values in all_angle_clean{j}
+                    min_angle = min(all_angle_clean{j});
+                    max_angle = max(all_angle_clean{j});
+
+                    % Check if angle_val is within the interval [min_angle, max_angle]
+                    if angle_val >= min_angle && angle_val <= max_angle
+                        % Increment counter if angle_val is within the interval
+                        count_members_per_benchmark(j) = count_members_per_benchmark(j) + 1;
+                        % Break out of the inner loop since angle_val is found in this interval
+                        break;
+                    end
+                end
+            end
+
+            fprintf('Percentage of sample points included by angle for each benchmark\n');
+
+            % Print the count of members included for each j
+            for j = 1:idx - 1
+
+                % Display results
+                
+                fprintf('%s: %.2f%%\n', names{j}, (count_members_per_benchmark(j) / numel(angle_sample_clean)) * 100);
+
+            end
+
+
             % Calculate distances for each sample separately
             distances = zeros(size(meanFx_sample_clean, 2), size(all_meanFx_clean, 2));
-            
+
             % Define the number of neighbors to consider per sample
             k = 5;
             
@@ -352,10 +432,16 @@ function main()
 
 
 
+
+
+
+
     end
 
 
     if boxplots == true
+
+       
 
         figure;
 
@@ -385,10 +471,10 @@ function main()
         end
 
         % Adjusting font size of labels
-        set(gca, 'FontSize', 16);
+        set(gca, 'FontSize', 18);
 
         % Adding labels and title with improved font size
-        ylabel('Phase angle values', 'FontSize', 16);
+        ylabel('Phase angle values (φ)', 'FontSize', 16);
         title('Boxplot of phase angles', 'FontSize', 18);
 
         % Adjusting the plot appearance
