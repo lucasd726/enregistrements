@@ -188,7 +188,7 @@ function main()
         
 
         %compute mean values
-        meanFx(i) = mean(Fx(first:last));
+        meanFx(i) = mean(Fx(first:last)); % mode
         meanFy(i) = mean(Fy(first:last));
 
         % Append Fx and Fy to the corresponding benchmark type
@@ -237,7 +237,7 @@ function main()
         % for boxplots
         angles_boxplots{y} = compute_angles(all_Fx_plot{y}, all_Fy_plot{y});
 
-        if strcmp(names{y}, 'perlite') % 'perlite'
+        if strcmp(names{y}, 'martensiteall') % 'perlite'
 
             compute_stats(all_Fx_plot{y}, all_Fy_plot{y}, names{y});
 
@@ -284,7 +284,7 @@ function main()
                 'k', 'sample', index_clean, 1);
 
             Z_sample_clean = meanFx_sample_clean + 1j*meanFy_sample_clean;
-            angle_sample_clean = angle(rad2deg(Z_sample_clean));
+            angle_sample_clean = rad2deg(angle(Z_sample_clean));
 
             for j = 1 : idx - 1
     
@@ -372,10 +372,10 @@ function main()
 
                 % get Z and the angles for each point
                 Z = all_meanFx_clean + 1j*all_meanFy_clean;
-                angles = angle(rad2deg(Z));
+                angles = rad2deg(angle(Z));
 
                 Z_sample(i) = meanFx_sample_clean(i) + 1j*meanFy_sample_clean(i);
-                angle_sample(i) = angle(rad2deg(Z_sample(i)));
+                angle_sample(i) = rad2deg(angle(Z_sample(i)));
 
                 distances_angle(i, :) = abs(angle_sample(i) - angles);
 
@@ -492,8 +492,8 @@ function main()
 
     end
 
-    saveas(gcf,FullFileNames,'emf');
-    saveas(gcf,FullFileNames,'tiffn')
+    % saveas(gcf,FullFileNames,'emf');
+    % saveas(gcf,FullFileNames,'tiffn')
 
 
 end

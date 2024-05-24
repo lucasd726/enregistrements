@@ -29,7 +29,7 @@ function compute_stats(meanFx, meanFy, material)
     figure;
 
     % Create boxplot with enhanced readability
-    boxplot([angles'], 'Labels', {sprintf('%s (30 measures)', material)});
+    boxplot([angles'], 'Labels', {sprintf('%s', material)});
 
     % Accessing handles to adjust line width
     h = findobj(gca, 'Tag', 'Box');
