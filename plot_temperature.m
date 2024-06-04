@@ -170,7 +170,7 @@ ylabel('Mean Phase Angle (degrees)', 'FontSize', 12, 'FontWeight', 'bold');
 grid on; % Add grid lines
 set(gca, 'FontSize', 12); % Set axis tick labels font size
 xlim([min(temperatures) max(temperatures)]); % Set x-axis limits
-ylim([min(mean_angles)-5 max(mean_angles)+5]); % Set y-axis limits with some padding
+ylim([min(mean_angles)-0.5 max(mean_angles)+0.5]); % Set y-axis limits with some padding
 
 hold on
 % Add markers and line style

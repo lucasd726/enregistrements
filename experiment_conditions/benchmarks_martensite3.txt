@@ -1,0 +1,15 @@
+Test name : benchmarks_martensite3
+Excitation frequency: 500 kHz 
+Probe type: MMTF-40
+Material of the tested piece: martensite
+Surface condition of the tested piece: polished - 1 micrometer
+Environment temperature: no data
+Sample temperature: no data
+Presence of external electromagnetic noise sources: probably
+Zero calibration frequency: one time for all measures
+Nortec 600 angle setting (degrees) : 0
+Nortec 600 vertical gain (dB) : 44
+Nortec 600 horizontal gain (dB) : 50
+Nortec 600 application : fissures
+
+Template version : v1 

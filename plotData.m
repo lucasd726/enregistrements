@@ -1,15 +1,23 @@
-function plotData(meanFx, meanFy, color, label, index, texte)
-    % Plot mean points
+function plotData(meanFx, meanFy, color, label, index, texte, line)
+% Plot mean points
+
+if line
+    % If line is true, plot dashed lines
+    plot(meanFx, meanFy, '-', 'Color', color);
+else
+    % If line is false, plot individual points
     plot(meanFx, meanFy, 'o', 'Color', color);
-    hold on;
-    % Add labels
+end
 
-    if (texte)
+hold on;
+% Add labels
 
-        for i = 1:length(meanFx)
-            text(meanFx(i), meanFy(i), ['  ' label ' ' index{i}], 'Color', color);
-        end
+if (texte)
 
+    for i = 1:length(meanFx)
+        % text(meanFx(i), meanFy(i), ['  ' label ' ' index{i}], 'Color', color);
     end
+
+end
 
 end

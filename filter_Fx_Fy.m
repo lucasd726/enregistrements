@@ -6,8 +6,8 @@ function [filtered_meanFx, filtered_meanFy, filtered_index] = filter_Fx_Fy(meanF
     std_dev_angles = std(angles);
     
     % Define the lower and upper bounds for filtering
-    lower_bound = mean_angles - 2*std_dev_angles;
-    upper_bound = mean_angles + 2*std_dev_angles;
+    lower_bound = mean_angles - 5*std_dev_angles;
+    upper_bound = mean_angles + 5*std_dev_angles;
     
     % Filter perlite_meanFx_combined and perlite_meanFy_combined based on filtered angles
     filtered_meanFx = meanFx(angles >= lower_bound & angles <= upper_bound);
