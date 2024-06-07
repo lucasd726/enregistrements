@@ -1,4 +1,4 @@
-function main_line()
+function main()
 
     close all
     clc
@@ -17,7 +17,7 @@ function main_line()
 
         currentFolder = pwd;
         paramsFilePath = fullfile(currentFolder, 'params_points.pssettings');
-        pdfFilePath = fullfile(currentFolder, 'prez_1-64-72.pdf');
+        pdfFilePath = fullfile(currentFolder, 'prez_measure_points.pdf');
         winopen(paramsFilePath);
         winopen(pdfFilePath);
 
@@ -31,7 +31,7 @@ function main_line()
 
         currentFolder = pwd;
         paramsFilePath = fullfile(currentFolder, 'params_line.pssettings');
-        pdfFilePath = fullfile(currentFolder, 'prez_1-64-72.pdf');
+        pdfFilePath = fullfile(currentFolder, 'prez_measure_points.pdf');
         winopen(paramsFilePath);
         winopen(pdfFilePath);
 
@@ -39,7 +39,7 @@ function main_line()
 
     % Decide how many benchmarks we want to use
     user = getenv('username');
-    startpath = ['C:\Users\',user,'\Desktop\PRI\enregistrements\'];
+    startpath = ['C:\Users\',user,'\Desktop\PRI_Lucas\enregistrements\'];
     n_essais = input('Enter the number of benchmarks to use : ');
 
     number_of_files = zeros(1, n_essais);
@@ -242,17 +242,32 @@ function main_line()
         % look for the idx for the name of the current measures
         idx = find(strcmp(names, sample_name));
 
-        % Filter Fx values that are above 2 in the specified range
-        filtered_Fx = Fx(first_line:last_line);
-        filtered_Fy = Fy(first_line:last_line);
-        valid_indices = filtered_Fx > 3;
-
         if line
+            % Filter Fx values that are above 2 in the specified range
+            filtered_Fx = Fx(first_line:last_line);
+            filtered_Fy = Fy(first_line:last_line);
+            % Normalize the magnitude
+            % Calculate the complex magnitude
+            magnitudes = abs(filtered_Fx + 1i * filtered_Fy);
+            % Find the maximum magnitude
+            max_magnitude = max(magnitudes);
+            % Only taking the high values, less noise
+            valid_indices = filtered_Fx > (0.8 * max(Fx));
+            % uncomment under if compute_stats (need no normalization)
             all_Fx_plot{idx} = [all_Fx_plot{idx}, filtered_Fx(valid_indices)];
             all_Fy_plot{idx} = [all_Fy_plot{idx}, filtered_Fy(valid_indices)];
+            % all_Fx_plot{idx} = [all_Fx_plot{idx}, filtered_Fx(valid_indices)/ max_magnitude];
+            % all_Fy_plot{idx} = [all_Fy_plot{idx}, filtered_Fy(valid_indices)/ max_magnitude];
         else
+            % Calculate the complex magnitude for mean values
+            mean_magnitudes = abs(meanFx(i) + 1i * meanFy(i));
+            % Find the maximum magnitude
+            max_mean_magnitude = max(mean_magnitudes);
+            % uncomment under if compute_stats
             all_Fx_plot{idx} = [all_Fx_plot{idx}, meanFx(i)];
             all_Fy_plot{idx} = [all_Fy_plot{idx}, meanFy(i)];
+            % all_Fx_plot{idx} = [all_Fx_plot{idx}, meanFx(i)/ max_mean_magnitude];
+            % all_Fy_plot{idx} = [all_Fy_plot{idx}, meanFy(i)/ max_mean_magnitude];
         end
 
     end
@@ -271,7 +286,7 @@ function main_line()
     % For the boxplots later
     angles_boxplots = cell(1, idx - 1);
 
-    % OLD CODE (to normalize the impedance plane)
+    % OLD CODE (to normalize the impedance plane, perlite phase at 45 degrees and norm at 1)
     % angle_clean_mean_perlite_vector = zeros(1, 20);
 
     % for y = 1 : idx - 1
@@ -350,6 +365,7 @@ function main_line()
     % 
     % end
 
+    fig1 = figure;
 
     for y = 1 : idx - 1
     
@@ -372,7 +388,7 @@ function main_line()
 
         % This code below computes stats like mean value, standard
         % deviation, etc.
-        if strcmp(names{y}, 'perlite') % change name to get stats
+        if strcmp(names{y}, 'martensitepoints1') % change name to get stats
             compute_stats(all_Fx_plot{y}, all_Fy_plot{y}, names{y});
         end
     
@@ -381,6 +397,9 @@ function main_line()
 
         % Get the color for plotting
         color = getColorForIteration(y);
+
+        % Switch to figure 1
+        figure(fig1);
 
         % Plot data
         plotData(all_Fx_plot_clean{y}, all_Fy_plot_clean{y}, color, names{y}, index_clean, 1, line);
@@ -441,8 +460,8 @@ function main_line()
 
 
     % title for labels
-    xlabel('Resistance Fx (in V)', 'FontSize', 14);
-    ylabel('Reactance Fy (in V)', 'FontSize', 14);
+    xlabel('Normalized resistance Fx', 'FontSize', 14);
+    ylabel('Normalized reactance Fy', 'FontSize', 14);
 
     % the rest of the code is comparison with a sample of points (Rule of
     % mixtures)

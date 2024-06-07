@@ -11,3 +11,5 @@ Nortec 600 angle setting (degrees) : 0
 Nortec 600 vertical gain (dB) : 44
 Nortec 600 horizontal gain (dB) : 50
 Nortec 600 application : fissures
+
+Template version : v1 

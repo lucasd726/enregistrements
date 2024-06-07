@@ -5,7 +5,7 @@ test_name = input('Enter test name : ', 's');
 user_name = getenv('USERNAME');
 
 % Définir le chemin du dossier de stockage
-folder_path = fullfile('C:', 'Users', user_name, 'Desktop', 'PRI', 'enregistrements', 'experiment_conditions');
+folder_path = fullfile('C:', 'Users', user_name, 'Desktop', 'PRI_Lucas', 'enregistrements', 'experiment_conditions');
 
 % Créer le dossier s'il n'existe pas
 if ~exist(folder_path, 'dir')
@@ -31,8 +31,8 @@ excitation_frequency = promptForInput('Excitation frequency (in kHz) : ');
 probe_type = promptForInput('Probe type : ');
 material_tested = promptForInput('Material of the tested piece : ');
 surface_condition = promptForInput('Surface condition of the tested piece : ');
-environment_temperature = promptForInput('Environment temperature : ');
-sample_temperature = promptForInput('Sample temperature : ');
+environment_temperature = promptForInput('Environment temperature (°C) : ');
+sample_temperature = promptForInput('Sample temperature (°C) : ');
 electromagnetic_noise = promptForInput('Presence of external electromagnetic noise sources : ');
 calibration_frequency = promptForInput('Zero calibration frequency : ');
 nortec_angle = promptForInput('Nortec 600 angle setting (degrees) : ');
@@ -46,8 +46,8 @@ fprintf(fileID, 'Excitation frequency: %s kHz \n', excitation_frequency);
 fprintf(fileID, 'Probe type: %s\n', probe_type);
 fprintf(fileID, 'Material of the tested piece: %s\n', material_tested);
 fprintf(fileID, 'Surface condition of the tested piece: %s\n', surface_condition);
-fprintf(fileID, 'Environment temperature: %s\n', environment_temperature);
-fprintf(fileID, 'Sample temperature: %s\n', sample_temperature);
+fprintf(fileID, 'Environment temperature (°C): %s\n', environment_temperature);
+fprintf(fileID, 'Sample temperature (°C): %s\n', sample_temperature);
 fprintf(fileID, 'Presence of external electromagnetic noise sources: %s\n', electromagnetic_noise);
 fprintf(fileID, 'Zero calibration frequency: %s\n', calibration_frequency);
 fprintf(fileID, 'Nortec 600 angle setting (degrees) : %s\n', nortec_angle);

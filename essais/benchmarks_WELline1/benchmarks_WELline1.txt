@@ -1,8 +1,8 @@
-Test name : benchmarks_WELline1
+Test name : benchmarks_WELline1 Q2 Bussy V2
 Excitation frequency: 500 kHz 
 Probe type: MMTF-40
 Material of the tested piece: perlite R260
-Surface condition of the tested piece: after triboring test
+Surface condition of the tested piece: real rail (used) with a squat
 Environment temperature: no data
 Sample temperature: 23.8 °C
 Presence of external electromagnetic noise sources: /

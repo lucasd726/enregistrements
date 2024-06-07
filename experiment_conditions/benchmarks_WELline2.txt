@@ -1,0 +1,15 @@
+Test name : benchmarks_WELline2 
+Excitation frequency: 500 kHz 
+Probe type: MMTF 40
+Material of the tested piece: real R260 rail
+Surface condition of the tested piece: from bussy directly
+Environment temperature (°C): /
+Sample temperature (°C): 23.9
+Presence of external electromagnetic noise sources: /
+Zero calibration frequency: 1
+Nortec 600 angle setting (degrees) : 0
+Nortec 600 vertical gain (dB) : 44
+Nortec 600 horizontal gain (dB) : 50
+Nortec 600 application : fissures
+
+Template version : v1 

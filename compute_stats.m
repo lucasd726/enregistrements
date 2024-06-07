@@ -26,42 +26,31 @@ fprintf('Standard uncertainty: %.2f\n', unc_angles);
 fprintf('2 sigma: %.2f\n', two_sigma);
 
 
-
-% Define grid for Gaussian distributions
-grid_size = 1000; % Adjust grid size as needed
+% OLD CODE, Define grid for Gaussian distributions
+% grid_size = 1000; % Adjust grid size as needed
 
 % Fx_grid = linspace(0, max(meanFx), grid_size);
 % Fy_grid = linspace(0, max(meanFy), grid_size);
 
-Fx_grid = linspace(max(meanFx) - 0.5, max(meanFx)+0.1, grid_size);
-Fy_grid = linspace(max(meanFy) - 0.5, max(meanFy)+0.1, grid_size);
-[Fx_mesh, Fy_mesh] = meshgrid(Fx_grid, Fy_grid);
+% Fx_grid = linspace(max(meanFx) - 0.5, max(meanFx)+0.1, grid_size);
+% Fy_grid = linspace(max(meanFy) - 0.5, max(meanFy)+0.1, grid_size);
+% [Fx_mesh, Fy_mesh] = meshgrid(Fx_grid, Fy_grid);
 
 % Parameters for Gaussian distribution
-sigma = std_dev_angles; % Standard deviation for Gaussian
+% sigma = std_dev_angles; % Standard deviation for Gaussian
 
 % Initialize the figure
-figure;
-hold on;
-
+% figure;
+% hold on;
 
 % Calculate the angle of each grid point
-Z_mesh = Fx_mesh + 1j * Fy_mesh;
-mesh_angles = rad2deg(angle(Z_mesh));
+% Z_mesh = Fx_mesh + 1j * Fy_mesh;
+% mesh_angles = rad2deg(angle(Z_mesh));
 
 % Create a mask for points within the angle range
-angle_mask = (mesh_angles >= min_angles) & (mesh_angles <= max_angles);
+% angle_mask = (mesh_angles >= min_angles) & (mesh_angles <= max_angles);
 
-% Calculate angle difference from the mean angle
-angle_diff = mesh_angles - mean_angles;
-
-% % Normalize the angle difference to the range [-180, 180]
-% angle_diff = mod(angle_diff + 180, 360) - 180;
-
-% Create Gaussian distribution based on angle difference
-% Z_gaussian = exp(-(angle_diff.^2) / (2 * sigma^2));
-
-Z_gaussian = normpdf(mesh_angles, mean_angles, sigma);
+% Z_gaussian = normpdf(mesh_angles, mean_angles, sigma);
 
 % Apply the mask to the Gaussian distribution
 % Z_gaussian = Z_gaussian .* angle_mask;
@@ -78,40 +67,28 @@ Z_gaussian = normpdf(mesh_angles, mean_angles, sigma);
 % scatter3(meanFx, meanFy, mean_Z, 50, 'r');
 
 % Set colormap and labels
-colormap('jet');
-colorbar;
-xlabel('Fx');
-ylabel('Fy');
-zlabel('Gaussian Intensity');
-title('3D Gaussian Distributions on Impedance Plane');
+% colormap('jet');
+% colorbar;
+% xlabel('Fx');
+% ylabel('Fy');
+% zlabel('Gaussian Intensity');
+% title('3D Gaussian Distributions on Impedance Plane');
 
 % Adjust plot appearance
-view(3);
-hold off;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+% view(3);
+% hold off;
 
 % Create a boxplot
 figure;
 
+% Compute the number of measures
+num_measures = length(angles);
+
+% Create the label string with the material name and the number of measures
+label_str = sprintf('%s (%d measures)', material, num_measures);
+
 % Create boxplot with enhanced readability
-boxplot([angles'], 'Labels', {sprintf('%s', material)});
+boxplot([angles'], 'Labels', {label_str});
 
 % Accessing handles to adjust line width
 h = findobj(gca, 'Tag', 'Box');

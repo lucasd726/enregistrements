@@ -8,9 +8,4 @@ function plotFilledAreas(meanFx, coefficients_low, coefficients_high, color)
 
     fill([Fx_fit_low, fliplr(Fx_fit_high)], [Fy_fit_low, fliplr(Fy_fit_high)], color, 'FaceAlpha', 0.3);
 
-
-    
-
-
-
 end

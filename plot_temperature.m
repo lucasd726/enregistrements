@@ -4,7 +4,7 @@ clc
 
 % Decide how many benchmarks we want to use
 user = getenv('username');
-startpath = ['C:\Users\',user,'\Desktop\PRI\enregistrements\'];
+startpath = ['C:\Users\',user,'\Desktop\PRI_Lucas\enregistrements\'];
 n_essais = input('Enter the number of benchmarks to use : ');
 
 number_of_files = zeros(1, n_essais);
