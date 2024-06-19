@@ -17,7 +17,7 @@ function main()
 
         currentFolder = pwd;
         paramsFilePath = fullfile(currentFolder, 'params_points.pssettings');
-        pdfFilePath = fullfile(currentFolder, 'prez_measure_points.pdf');
+        pdfFilePath = fullfile(currentFolder, 'measure_points.pdf');
         winopen(paramsFilePath);
         winopen(pdfFilePath);
 
@@ -31,7 +31,7 @@ function main()
 
         currentFolder = pwd;
         paramsFilePath = fullfile(currentFolder, 'params_line.pssettings');
-        pdfFilePath = fullfile(currentFolder, 'prez_measure_points.pdf');
+        pdfFilePath = fullfile(currentFolder, 'measure_line.pdf');
         winopen(paramsFilePath);
         winopen(pdfFilePath);
 
@@ -40,7 +40,7 @@ function main()
     % Decide how many benchmarks we want to use
     user = getenv('username');
     startpath = ['C:\Users\',user,'\Desktop\PRI_Lucas\enregistrements\'];
-    n_essais = input('Enter the number of benchmarks to use : ');
+    n_essais = input('Enter the number of calibration references to use : ');
 
     number_of_files = zeros(1, n_essais);
     new_number_of_files = zeros(1, n_essais);
@@ -53,7 +53,7 @@ function main()
             % Load file names from a saved MAT file
             try
 
-                load('file_names_data.mat'); % Load previously saved file names
+                load('file_names_data.mat', 'FullFileNames_all', 'fullfile_idx'); % Load previously saved file names
                 fprintf('File names loaded from saved data.\n');
 
             catch
@@ -82,9 +82,8 @@ function main()
 
     end
 
-    length_sample = 0;
     % Ask the user if they want to load sample files
-    prompt = 'Do you want to load sample files? (y/n): ';
+    prompt = 'Do you want to load verification sample files? (y/n): ';
     user_response = input(prompt, 's');
 
     if strcmpi(user_response, 'y')
@@ -111,6 +110,7 @@ function main()
 
     % index
     index = cell(1, n_essais + 1);
+    max_mean_magnitude = zeros(1, n_essais + 1);
 
     % 10 names maximum
     names = cell(1, 10);
@@ -126,8 +126,7 @@ function main()
 
     % euclidean = false;
 
-    % line measures is initially false
-    line = false;
+    % check line and point flags are initially false
     check_points = false;
     check_line = false;
 
@@ -139,11 +138,11 @@ function main()
     all_Fx_plot_clean = cell(1, 10);
     all_Fy_plot_clean = cell(1, 10);
 
-    % merge means points measures with same name are merged (like perlite1
+    % OLD CODE : merge means points measures with same name are merged (like perlite1
     % and perlite 2)
-    all_Fx_plot_clean_merge = cell(1, 10);
-    all_Fy_plot_clean_merge = cell(1, 10);
-    common_names = cell(1, 10);
+    % all_Fx_plot_clean_merge = cell(1, 10);
+    % all_Fy_plot_clean_merge = cell(1, 10);
+    % common_names = cell(1, 10);
 
     all_angle_clean = cell(1, 10);
     all_magnitude_clean = cell(1, 10);
@@ -169,7 +168,7 @@ function main()
         FileName = strsplit(filename_clean,'\');
         FileName = FileName{end};
         infos = strsplit(FileName,'_');
-        type = infos{1}; % type is benchmarks or sample
+        % type = infos{1}; % type is calibration or verification, not used for now
         sample_name = infos{2}; % name is perlite1, perlite2, perliteline1, etc.
 
         % the code below is due to the fact that we don't have index for
@@ -251,23 +250,25 @@ function main()
             magnitudes = abs(filtered_Fx + 1i * filtered_Fy);
             % Find the maximum magnitude
             max_magnitude = max(magnitudes);
-            % Only taking the high values, less noise
+            % Only taking the high values, less noise, more than 80% of the value of Fx
             valid_indices = filtered_Fx > (0.8 * max(Fx));
             % uncomment under if compute_stats (need no normalization)
-            all_Fx_plot{idx} = [all_Fx_plot{idx}, filtered_Fx(valid_indices)];
-            all_Fy_plot{idx} = [all_Fy_plot{idx}, filtered_Fy(valid_indices)];
-            % all_Fx_plot{idx} = [all_Fx_plot{idx}, filtered_Fx(valid_indices)/ max_magnitude];
-            % all_Fy_plot{idx} = [all_Fy_plot{idx}, filtered_Fy(valid_indices)/ max_magnitude];
+            % all_Fx_plot{idx} = [all_Fx_plot{idx}, filtered_Fx(valid_indices)];
+            % all_Fy_plot{idx} = [all_Fy_plot{idx}, filtered_Fy(valid_indices)];
+            all_Fx_plot{idx} = [all_Fx_plot{idx}, filtered_Fx(valid_indices)/ max_magnitude];
+            all_Fy_plot{idx} = [all_Fy_plot{idx}, filtered_Fy(valid_indices)/ max_magnitude];
         else
+
             % Calculate the complex magnitude for mean values
             mean_magnitudes = abs(meanFx(i) + 1i * meanFy(i));
             % Find the maximum magnitude
-            max_mean_magnitude = max(mean_magnitudes);
+            max_mean_magnitude(idx) = max(mean_magnitudes, max_mean_magnitude(idx));
             % uncomment under if compute_stats
+            % all_Fx_plot{idx} = [all_Fx_plot{idx}, meanFx(i)];
+            % all_Fy_plot{idx} = [all_Fy_plot{idx}, meanFy(i)];
             all_Fx_plot{idx} = [all_Fx_plot{idx}, meanFx(i)];
             all_Fy_plot{idx} = [all_Fy_plot{idx}, meanFy(i)];
-            % all_Fx_plot{idx} = [all_Fx_plot{idx}, meanFx(i)/ max_mean_magnitude];
-            % all_Fy_plot{idx} = [all_Fy_plot{idx}, meanFy(i)/ max_mean_magnitude];
+
         end
 
     end
@@ -275,8 +276,10 @@ function main()
     % Set idx to its max value
 
     % Reset idx to the maximum non-null value
-    non_empty_indices = find(~cellfun('isempty', names));
-    idx = max(non_empty_indices);
+    % Logical array where non-empty cells are marked as true
+    non_empty_logical = ~cellfun('isempty', names);
+    % Find the maximum index of non-empty elements
+    idx = find(non_empty_logical, 1, 'last');
 
     % Add 1 to the index if not already done
     if (sample == false)
@@ -367,6 +370,9 @@ function main()
 
     fig1 = figure;
 
+    % OLD CODE : for different plots
+    % fig2 = figure;
+
     for y = 1 : idx - 1
     
         % It will be different for lines and not lines
@@ -379,7 +385,9 @@ function main()
 
         else
 
-            [all_Fx_plot_clean{y}, all_Fy_plot_clean{y}, index_clean] = filter_Fx_Fy(all_Fx_plot{y}, all_Fy_plot{y}, index{y});
+            all_Fx_plot{y} = all_Fx_plot{y}./max_mean_magnitude(y);
+            all_Fy_plot{y} = all_Fy_plot{y}./max_mean_magnitude(y);
+            [all_Fx_plot_clean{y}, all_Fy_plot_clean{y}, index_clean] = filter_Fx_Fy(all_Fx_plot{y}, all_Fy_plot{y}, index{y});    
 
         end
 
@@ -388,7 +396,7 @@ function main()
 
         % This code below computes stats like mean value, standard
         % deviation, etc.
-        if strcmp(names{y}, 'martensitepoints1') % change name to get stats
+        if strcmp(names{y}, 'm') % change name to get stats
             compute_stats(all_Fx_plot{y}, all_Fy_plot{y}, names{y});
         end
     
@@ -401,16 +409,48 @@ function main()
         % Switch to figure 1
         figure(fig1);
 
+        hold on;
+
+        % Set x and y axis limits
+        axis([0 1 0 1]);
+
         % Plot data
+
+
         plotData(all_Fx_plot_clean{y}, all_Fy_plot_clean{y}, color, names{y}, index_clean, 1, line);
+
         plotRegressionAndFilledAreas(all_Fx_plot_clean{y}, all_Fy_plot_clean{y}, color, names(y), iteration);
+
         iteration = iteration + 1;
+
+        % OLD CODE, to try a different type of plot
+        % C_nplot = all_Fx_plot_clean{y} + 1j*all_Fy_plot_clean{y};
+        % Z_nplot = abs(C_nplot);
+        % angles_nplot = rad2deg(angle(C_nplot));
+        % 
+        % % Plot figure 
+        % figure(fig2);
+        % 
+        % % Calculate means
+        % mean_Z = mean(Z_nplot);
+        % mean_angles = mean(angles_nplot);
+        % 
+        % % Calculate 2 * standard deviation uncertainties
+        % Z_uncertainty = 2 * std(Z_nplot);
+        % angles_uncertainty = 2 * std(angles_nplot);
+        % 
+        % % Plot with error bars
+        % figure(fig2);
+        % errorbar(mean_Z, mean_angles, Z_uncertainty, Z_uncertainty, angles_uncertainty, angles_uncertainty, 'o');
+        % hold on
+
+
 
     end
 
 
-    % OLD CODE next : merge samples of points with similar names :
-    % perlite1, perlite2
+    % OLD CODE next : merge samples of points with similar names : perlite1, perlite2
+
     % a = 0;
     % 
     % % Loop through the data and group by common prefix
@@ -439,8 +479,6 @@ function main()
     %     end
     % 
     % end
-
-
     % for k = 1:a
     % 
     %     % Get the color for plotting
@@ -458,10 +496,18 @@ function main()
     % 
     % end
 
+    figure(fig1);
 
     % title for labels
     xlabel('Normalized resistance Fx', 'FontSize', 14);
     ylabel('Normalized reactance Fy', 'FontSize', 14);
+
+    % OLD CODE, to try a different type of plot
+    % figure(fig2);
+    % xlabel('Magnitude Z', 'FontSize', 14);
+    % ylabel('Phase angle (φ)', 'FontSize', 14);
+    % title('Mean values with 2*standard deviation uncertainties');
+    % grid on;
 
     % the rest of the code is comparison with a sample of points (Rule of
     % mixtures)
@@ -474,28 +520,32 @@ function main()
 
     if (sample == true)
 
-        % Not clean yet
-        meanFx_sample = all_Fx_plot{idx};
-        meanFy_sample = all_Fy_plot{idx};
-
         % It will be different for lines and not lines
         line = contains(names{idx}, 'line', 'IgnoreCase', true);
 
         if (line)
 
+            % Not clean yet but normalized
+            meanFx_sample = all_Fx_plot{idx};
+            meanFy_sample = all_Fy_plot{idx};
             indexArray = cellfun(@(x) num2str(x), num2cell(1:length(meanFx_sample)), 'UniformOutput', false);
             [meanFx_sample_clean, meanFy_sample_clean, index_clean] = filter_Fx_Fy(meanFx_sample, meanFy_sample, indexArray);
 
         else
 
-            [meanFx_sample_clean, meanFy_sample_clean, index_clean] = filter_Fx_Fy(meanFx_sample, meanFy_sample, index{y});
+            % Not clean yet but normalized
+            meanFx_sample = all_Fx_plot{idx}./max_mean_magnitude(idx);
+            meanFy_sample = all_Fy_plot{idx}./max_mean_magnitude(idx);
+            [meanFx_sample_clean, meanFy_sample_clean, index_clean] = filter_Fx_Fy(meanFx_sample, meanFy_sample, index{idx});
 
         end
 
 
         % Plot data
-        plotData(meanFx_sample_clean, meanFy_sample_clean, ...
-            'k', 'sample', index_clean, 1, line);
+        plotData(meanFx_sample_clean, meanFy_sample_clean, 'k', names{idx}, index_clean, 1, line);
+
+        plotRegressionAndFilledAreas(meanFx_sample_clean, meanFy_sample_clean, ...
+            'k', {names{idx}}, iteration);
 
         Z_sample_clean = meanFx_sample_clean + 1j*meanFy_sample_clean;
         angle_sample_clean = rad2deg(angle(Z_sample_clean));
@@ -515,6 +565,8 @@ function main()
 
             % useful to comparison using Rule of mixtures
             mean_all_angle_clean(j) = mean(all_angle_clean{j});
+            % get the mean angle
+            fprintf("Mean angle group %s : %.2f\n", names{j}, mean_all_angle_clean(j));
 
         end
 
@@ -540,49 +592,63 @@ function main()
             end
         end
 
-        fprintf('Percentage of sample points included by angle for each benchmark\n');
+        fprintf('Percentage of sample %s points included by angle for each calibration reference\n', names{idx});
 
         % Print the count of members included for each j
         for j = 1:idx - 1
 
             % Display results
 
-            fprintf('%s: %.2f%%\n', names{j}, (count_members_per_benchmark(j) / numel(angle_sample_clean)) * 100);
+            fprintf('%s: %.1f%%\n', names{j}, (count_members_per_benchmark(j) / numel(angle_sample_clean)) * 100);
 
         end
 
-        % prepare for Rule of mixtures
-        mean_angle_sample_clean = mean(angle_sample_clean);
-        [max_value, max_index] = max(mean_all_angle_clean);
-        [min_value, min_index] = min(mean_all_angle_clean);
+        
+        if (idx == 2)
 
-        range = abs(max_value - min_value);
+            p1 = 100;
+            fprintf("The sample is %.1f%% similar to group %s\n", p1, names{idx-1});
 
-        % Calculate probabilities only if range is non-zero (to avoid division by zero)
-        if range ~= 0
-            % Check if mean_angle_sample_clean is not between max_value and min_value
-            if mean_angle_sample_clean < min_value
-                p1 = 0;  % Set probability to 0 for the max group
-                p2 = 100;  % Set probability to 100 for the min group
-            elseif mean_angle_sample_clean > max_value
-                p1 = 100;  % Set probability to 100 for the max group
-                p2 = 0;  % Set probability to 0 for the min group
+        elseif (idx == 3)
+
+            % prepare for Rule of mixtures
+            mean_angle_sample_clean = mean(angle_sample_clean);
+            [max_value, max_index] = max(mean_all_angle_clean);
+            [min_value, min_index] = min(mean_all_angle_clean);
+
+            range = abs(max_value - min_value);
+
+            % Calculate probabilities only if range is non-zero (to avoid division by zero)
+            if range ~= 0
+                % Check if mean_angle_sample_clean is not between max_value and min_value
+                if mean_angle_sample_clean < min_value
+                    p1 = 0;  % Set probability to 0 for the max group
+                    p2 = 100;  % Set probability to 100 for the min group
+                elseif mean_angle_sample_clean > max_value
+                    p1 = 100;  % Set probability to 100 for the max group
+                    p2 = 0;  % Set probability to 0 for the min group
+                else
+                    % Calculate probabilities normally
+                    p2 = abs(mean_angle_sample_clean - max_value)/range * 100;
+                    p1 = abs(mean_angle_sample_clean - min_value)/range * 100;
+                end
             else
-                % Calculate probabilities normally
-                p2 = abs(mean_angle_sample_clean - max_value)/range * 100;
-                p1 = abs(mean_angle_sample_clean - min_value)/range * 100;
+                % Handle the case where max_value equals min_value
+                % For example, set p1 and p2 to 50% each in this case
+                p1 = 50;
+                p2 = 50;
             end
-        else
-            % Handle the case where max_value equals min_value
-            % For example, set p1 and p2 to 50% each in this case
-            p1 = 50;
-            p2 = 50;
+
+            fprintf("Probability that the sample belongs to group %s: %.1f%%\n", names{max_index}, p1);
+            fprintf("Probability that the sample belongs to group %s: %.1f%%\n", names{min_index}, p2);
+
+            fprintf("The sample %s is %.1f%% similar to group %s and %.1f%% similar to group %s\n", names{idx}, p1, names{max_index}, p2, names{min_index});
+
+        elseif (idx > 3)
+
+            fprintf("Too many calibration references : we can't express the rule of mixtures similarities with more than two calibration references");
+
         end
-
-        fprintf("Probability that the sample belongs to group %s: %.2f%%\n", names{max_index}, p1);
-        fprintf("Probability that the sample belongs to group %s: %.2f%%\n", names{min_index}, p2);
-
-        fprintf("The sample belongs %.2f%% to group %s and %.2f%% to group %s\n", p1, names{max_index}, p2, names{min_index});
 
 
         % OLD CODE, nearest neighbor identification
